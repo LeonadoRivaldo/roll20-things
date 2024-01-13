@@ -1,0 +1,9 @@
+{
+	"name": "class-actions",
+	"version": "1.0.0",
+	"description": "D&D 5e Automatic class actions",
+	"main": "class-actions.js",
+	"scripts": {},
+	"author": "leo rivaldo",
+	"license": "ISC"
+}
