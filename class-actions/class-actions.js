@@ -104,12 +104,18 @@ on('ready', () => {
 // });
 
 function createMod() {
+	function consoleLog(log) {
+		if (!dev) {
+			return;
+		}
+		log(msg);
+	}
 	function systemAlert(msg) {
 		sendChat('System', msg, null, { noarchive: true });
 	}
 	function findCharToken(charId) {
 		return function (graphic) {
-			log({ grid: graphic.get('represents'), charId });
+			consoleLog({ grid: graphic.get('represents'), charId });
 			return graphic.get('represents') === charId;
 		};
 	}
@@ -123,7 +129,7 @@ function createMod() {
 					return;
 				}
 
-				log(obj.get('current'));
+				consoleLog(obj.get('current'));
 
 				return `${obj.get('current')}`.toLowerCase() === type;
 			};
@@ -136,7 +142,7 @@ function createMod() {
 			type: 'attribute',
 		}).filter((obj) => obj.get('name').includes(baseName));
 
-		log(damageModObjs);
+		consoleLog(damageModObjs);
 
 		const dmgModTypeObject = damageModObjs.find(findDmgModifType(action));
 		const nameId = dmgModTypeObject.get('name').split('_')[2];
@@ -233,8 +239,9 @@ function createMod() {
 	const actionsMapping = {
 		Fúria: 'rage',
 	};
+	const dev = false;
 	const everything = findObjs({ type: 'graphic' }).filter(filterTokens);
-	log(everything);
+	consoleLog(everything);
 
 	on('chat:message', handleChatMessage);
 	log('=== Class Actions ready ===');
