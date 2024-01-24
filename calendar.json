@@ -1,0 +1,206 @@
+{
+	"c": {
+		"current": {
+			"month": 1,
+			"day_of_the_year": 1,
+			"day_of_the_week": 1,
+			"day_of_the_month": 1,
+			"year": 1492,
+			"weather": "Clear skies with a gentle breeze. A perfect day for adventuring."
+		},
+		"weekdays": [
+			"1st-day",
+			"2nd-day",
+			"3rd-day",
+			"4th-day",
+			"5th-day",
+			"6th-day",
+			"7th-day"
+		],
+		"months": [
+			{ "name": "Hammer", "days": 30, "weather_type": 0 },
+			{ "name": "Midwinter", "days": 30, "weather_type": 1 },
+			{ "name": "Alturiak", "days": 30, "weather_type": 2 },
+			{ "name": "Ches", "days": 30, "weather_type": 3 },
+			{ "name": "Tarsakh", "days": 30, "weather_type": 4 },
+			{ "name": "Mirtul", "days": 30, "weather_type": 5 },
+			{ "name": "Kythorn", "days": 30, "weather_type": 6 },
+			{ "name": "Flamerule", "days": 30, "weather_type": 7 },
+			{ "name": "Eleasis", "days": 30, "weather_type": 8 },
+			{ "name": "Eleint", "days": 30, "weather_type": 0 },
+			{ "name": "Marpenoth", "days": 30, "weather_type": 1 },
+			{ "name": "Uktar", "days": 30, "weather_type": 2 }
+		],
+		"seasons": [
+			{ "name": "Winter", "months": "1-2" },
+			{ "name": "Spring", "months": "3-5" },
+			{ "name": "Summer", "months": "6-8" },
+			{ "name": "Autumn", "months": "9-11" }
+		],
+		"leap": { "year": 4, "month": 2 },
+		"holidays": [
+			{ "name": "New Year's Day", "month": 1, "day": 1 },
+			{ "name": "Shieldmeet", "month": 3, "day": 1 },
+			{ "name": "Midsummer", "month": 6, "day": 15 },
+			{ "name": "Highharvestide", "month": 9, "day": 30 },
+			{ "name": "Feast of the Moon", "month": 11, "day": 30 },
+			{ "name": "Winter Solstice", "month": 12, "day": 31 }
+		],
+		"weather_types": [
+			{
+				"name": "Winter Clear",
+				"texts": [
+					"Clear skies with a gentle breeze. A perfect day for adventuring."
+				]
+			},
+			{
+				"name": "Winter Snowfall",
+				"texts": [
+					"Gentle snowfall covering the landscape in a serene blanket."
+				]
+			},
+			{
+				"name": "Winter Blizzard",
+				"texts": [
+					"Fierce blizzard conditions with limited visibility. Dangerous for travel."
+				]
+			},
+			{
+				"name": "Winter Cold",
+				"texts": [
+					"Cold and clear atmosphere, making it ideal for those who enjoy crisp weather."
+				]
+			},
+			{
+				"name": "Winter Thunderstorm",
+				"texts": [
+					"Heavy rain accompanied by thunder and lightning. Best to seek shelter."
+				]
+			},
+			{
+				"name": "Spring Blossoms",
+				"texts": [
+					"Spring blossoms fill the air, creating a pleasant and mild atmosphere."
+				]
+			},
+			{
+				"name": "Spring Rainy",
+				"texts": [
+					"Steady rain showers, making the ground damp and slippery."
+				]
+			},
+			{
+				"name": "Spring Thunderstorm",
+				"texts": [
+					"Heavy rain accompanied by thunder and lightning. Best to seek shelter."
+				]
+			},
+			{
+				"name": "Spring Sunny",
+				"texts": [
+					"Clear skies with a warm sun, perfect for outdoor activities."
+				]
+			},
+			{
+				"name": "Spring Rain Showers",
+				"texts": [
+					"Smaller localized rain clouds fill the skies, leaving the days filled both with rain and rainbows."
+				]
+			},
+			{
+				"name": "Summer Hot",
+				"texts": [
+					"Hot and dry weather, with the sun beating down relentlessly."
+				]
+			},
+			{
+				"name": "Summer Dry",
+				"texts": [
+					"Dry and sunny weather, a rare and enjoyable occurrence."
+				]
+			},
+			{
+				"name": "Summer Rainy",
+				"texts": [
+					"Steady rain showers, making the ground damp and slippery."
+				]
+			},
+			{
+				"name": "Summer Thunderstorm",
+				"texts": [
+					"Heavy rain accompanied by thunder and lightning. Best to seek shelter."
+				]
+			},
+			{
+				"name": "Summer Sunny",
+				"texts": [
+					"Clear skies with a scorching sun, creating a sweltering heat."
+				]
+			},
+			{
+				"name": "Autumn Leaves",
+				"texts": [
+					"Autumn leaves create a colorful and picturesque landscape."
+				]
+			},
+			{
+				"name": "Autumn Rainy",
+				"texts": [
+					"Steady rain showers, making the ground damp and slippery."
+				]
+			},
+			{
+				"name": "Autumn Blizzard",
+				"texts": [
+					"Fierce blizzard conditions with limited visibility. Dangerous for travel."
+				]
+			},
+			{
+				"name": "Autumn Mild",
+				"texts": [
+					"Mild temperatures and cool breezes, perfect for leisurely outdoor activities."
+				]
+			},
+			{
+				"name": "Autumn Thunderstorm",
+				"texts": [
+					"Heavy rain accompanied by thunder and lightning. Best to seek shelter."
+				]
+			}
+		],
+		"moons": [
+			{
+				"name": "Selûne",
+				"days_per_cycle": 30,
+				"cycle": [
+					"Waxing Crescent",
+					"First Quarter",
+					"Waxing Gibbous",
+					"Full Moon",
+					"Waning Gibbous",
+					"Last Quarter",
+					"Waning Crescent"
+				]
+			}
+		]
+	},
+
+	"config": {
+		"command": "cal",
+		"use_seasons": true,
+		"use_holidays": true,
+		"use_weather": true,
+		"use_table": true,
+		"use_moons": true,
+		"send_holidays": true,
+		"send_weather": true,
+		"send_table": true,
+		"send_moons": true,
+		"use_token": true,
+		"tokenId": "-NorSjzVzhdumyWKIjPC",
+		"use_handout": true,
+		"show_handout_players": true,
+		"player_show_command": true,
+		"firsttime": false
+	}
+}

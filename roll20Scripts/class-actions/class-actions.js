@@ -1,109 +1,7 @@
-/**
- * 
-on('ready', () => {
-	const tokenMarkers = JSON.parse(Campaign().get('token_markers'));
-
-	const getChatMessageFromTokenMarkers = (markers) =>
-		markers
-			.map(
-				(marker) =>
-					`<p><img src='${marker.url}'> ${marker.id}: ${marker.name}</p>`
-			)
-			.join('');
-
-	on('chat:message', (msg) => {
-		const command = msg.content.split(' ')[0].toLowerCase();
-
-		switch (command) {
-			case '!markernames':
-				sendChat(
-					'Token Markers',
-					getChatMessageFromTokenMarkers(tokenMarkers)
-				);
-				break;
-			case '!markerids':
-				const markerName = msg.content.split(' ')[1].toLowerCase();
-				const results = tokenMarkers.filter(
-					(marker) => marker.name.toLowerCase() === markerName
-				);
-				const chatMessage =
-					getChatMessageFromTokenMarkers(results) ||
-					'Unable to find any matching token markers';
-				sendChat('Token Markers', chatMessage);
-				break;
-			case '!settokenmarker':
-				if (msg.selected && msg.selected[0]._type === 'graphic') {
-					const obj = getObj(
-						msg.selected[0]._type,
-						msg.selected[0]._id
-					);
-					const currentMarkers = obj.get('statusmarkers').split(',');
-					const markerName = msg.content.split(' ')[1].toLowerCase();
-					currentMarkers.push(markerName);
-					obj.set('statusmarkers', currentMarkers.join(','));
-				}
-				break;
-			case '!gettokenmarkers':
-				if (msg.selected && msg.selected[0]._type === 'graphic') {
-					const obj = getObj(
-						msg.selected[0]._type,
-						msg.selected[0]._id
-					);
-					const currentMarkers = obj.get('statusmarkers');
-					sendChat('Token Markers', currentMarkers);
-				}
-				break;
-		}
-	});
-});
- */
-
-// on('ready', () => {
-//
-// 	on('chat:message', (msg) => {
-// 		const { selected, content } = msg;
-// 		const command = content.split(' ')[0].toLowerCase();
-// 		if (comands.includes(command)) {
-// 			if (!selected) {
-// 				sendChat('Class action warn:', 'No token selected');
-// 				return;
-// 			}
-// 		}
-// 	});
-// });
-
-// function systemAlert(msg) {
-// 	sendChat('System', msg, null, { noarchive: true });
-// }
-
-// on('chat:message', function (msg) {
-// 	const { selected, content, rolledByCharacterId } = msg;
-// 	const char = getObj('character', rolledByCharacterId);
-// 	if (content === '!rage') {
-// 		if (!selected) {
-// 			systemAlert('Token not selected, select ur token');
-// 			return;
-// 		}
-// 		const token = getObj(selected[0]._type, selected[0]._id);
-// 		setMarker(token, action);
-// 		return;
-// 	}
-// 	if (content === 'Token not selected, select ur token') {
-// 		return;
-// 	}
-
-// 	if (char) {
-// 		const action = findAction(content);
-// 		if (actions.includes(action)) {
-// 			const perfomed = decreaseClassResource(rolledByCharacterId);
-// 			if (perfomed) {
-// 				sendChat('', `!${action}`, null, { noarchive: true });
-// 			}
-// 		}
-// 	}
-// });
-
 function createMod() {
+	function playerFeedBack(msg) {
+		sendChat('System', `&{template:desc} {{desc=${msg}}}`);
+	}
 	function consoleLog(log) {
 		if (!dev) {
 			return;
@@ -171,8 +69,8 @@ function createMod() {
 		return map.find((key) => actionsMapping[key] === action);
 	}
 	function findAction(content) {
-		let action = content.split(' ').find((c) => c.includes('{{name='));
-		action = action.split('=')[1].replace('}}', '');
+		const findActionRegex = /{{name=(.*?)}}/;
+		let action = content.match(findActionRegex)[1].toLowerCase();
 
 		if (actionsMapping[action]) {
 			action = actionsMapping[action];
@@ -186,7 +84,12 @@ function createMod() {
 			type: 'attribute',
 			name: 'class_resource',
 		})[0];
-		const current = resource.get('current');
+		const resource_name = findObjs({
+			characterid: charId,
+			type: 'attribute',
+			name: 'class_resource_name',
+		})[0];
+		let current = resource.get('current');
 
 		if (current <= 0) {
 			systemAlert('You have no more avaliable class features today');
@@ -194,6 +97,13 @@ function createMod() {
 		}
 
 		resource.set('current', current - 1);
+
+		current = resource.get('current');
+		const max = resource.get('max');
+		const name = resource_name.get('current');
+		let msg = `You have ${current} of ${max} on ${name}`;
+		playerFeedBack(msg);
+
 		return true;
 	}
 	function handleChatMessage(msg) {
@@ -206,6 +116,13 @@ function createMod() {
 
 		if (char) {
 			const action = findAction(content);
+
+			// var usage = systemAlert(`?{Use ${action}|yes|no}`);
+
+			// if (usage === 'no') {
+			// 	return;
+			// }
+
 			const charToken = everything.find(
 				findCharToken(rolledByCharacterId)
 			);
@@ -233,11 +150,13 @@ function createMod() {
 			}
 		}
 	}
-
+	// Flecha do Agarrar
+	// Flecha Sombria
 	const noTokenErroMsg = 'Your token is not on the table';
-	const actions = ['rage'];
+	const actions = ['rage', 'divine sense'];
 	const actionsMapping = {
-		Fúria: 'rage',
+		fúria: 'rage',
+		'sentido divino': 'divine sense',
 	};
 	const dev = false;
 	const everything = findObjs({ type: 'graphic' }).filter(filterTokens);
