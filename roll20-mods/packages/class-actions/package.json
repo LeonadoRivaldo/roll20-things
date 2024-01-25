@@ -1,0 +1,10 @@
+{
+	"name": "@roll20-mods/class-actions",
+	"version": "1.0.6",
+	"description": "This is a Lazy way do deal with class actions",
+	"main": "index.js",
+	"scripts": {},
+	"keywords": [],
+	"author": "",
+	"license": "ISC"
+}

@@ -1,0 +1,14 @@
+{
+	"$schema": "https://github.com/Roll20/roll20-api-scripts/master/_Example%20Script%20-%20Check%20for%20formatting%20details/script.schema.json",
+	"name": "",
+	"script": "",
+	"version": "",
+	"previousversions": [],
+	"description": "",
+	"authors": "Kilzak",
+	"roll20userid": "5047",
+	"useroptions": [],
+	"dependencies": [],
+	"modifies": {},
+	"conflicts": []
+}
