@@ -6,7 +6,21 @@
 	"workspaces": [
 		"packages/*"
 	],
-	"scripts": {},
+	"scripts": {
+		"clean": "node utils/fileManager.js",
+		"version": "node utils/versionModule.js",
+		"version:store": "node utils/storeVersion.js",
+		"classActions:clean:dist": "npm run clean -- modName=class-actions",
+		"classActions:version:store": "npm run version:store -- modName=class-actions",
+		"classActions:version:patch": "npm run version -- modName=class-actions -- versionType=patch",
+		"classActions:version:minor": "npm run version -- modName=class-actions -- versionType=minor",
+		"classActions:version:major": "npm run version -- modName=class-actions -- versionType=major",
+		"classActions:webpack:build": "webpack --config webpack/classActions.webpack.config.js --mode production",
+		"classActions:build": "npm run classActions:webpack:build && npm run classActions:clean:dist",
+		"classActions:build:patch": "npm run classActions:version:store && npm run classActions:version:patch && npm run classActions:build",
+		"classActions:build:minor": "npm run classActions:version:store && npm run classActions:version:minor && npm run classActions:build",
+		"classActions:build:major": "npm run classActions:version:store && npm run classActions:version:major && npm run classActions:build"
+	},
 	"keywords": [],
 	"author": "Leo rivaldo",
 	"license": "ISC",

@@ -7,10 +7,10 @@ module.exports = function () {
 	const storeVersion = function (version, filePath) {
 		const historyFilePath = path.resolve(filePath, filename);
 
-		// Leitura do version_history.json (se existir)
+		// Read version_history.json if it exists
 		let versionHistory = getVersions(filePath);
 
-		// Escrevendo o array atualizado de versões de volta no version_history.json
+		// Write the updated array of versions back to version_history.json
 		versionHistory.push(version);
 
 		fs.writeFileSync(
@@ -18,7 +18,7 @@ module.exports = function () {
 			JSON.stringify(versionHistory, null, 2)
 		);
 
-		console.log(`Versão ${version} adicionada ao version_history.json`);
+		console.log(`Version ${version} added to version_history.json`);
 	};
 
 	const getVersions = function (filePath) {
@@ -30,7 +30,7 @@ module.exports = function () {
 			);
 			return JSON.parse(versionHistoryContent);
 		} catch (error) {
-			// Se o arquivo não existir ou estiver vazio, continuamos com um array vazio.
+			// If the file doesn't exist or is empty, continue with an empty array.
 		}
 	};
 
