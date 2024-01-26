@@ -8,7 +8,7 @@ module.exports = function (packgeInfo, scriptJsonObj, plugins = []) {
 	}
 
 	//mod props
-	const modName = packgeInfo.name.split('/')[1];
+	const modName = scriptJsonObj.name;
 	const version = packgeInfo.version;
 
 	//script
@@ -26,7 +26,7 @@ module.exports = function (packgeInfo, scriptJsonObj, plugins = []) {
 		},
 		plugins: [
 			...plugins,
-			new GenerateJsonPlugin('script.json', scriptJsonObj),
+			new GenerateJsonPlugin('../script.json', scriptJsonObj),
 		],
 	};
 };

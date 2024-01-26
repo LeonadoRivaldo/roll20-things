@@ -1,4 +1,4 @@
-const packgeInfo = require('../packages/class-actions/package.json');
+const packgeInfo = require('../packages/ClassActions/package.json');
 const extendedConfig = require('./extends.webpack.config');
 const modScript = require('../base.script.json');
 
