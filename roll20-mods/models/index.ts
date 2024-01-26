@@ -20,3 +20,9 @@ export enum EventTypes {
 	DestroyGraphic = 'destroy:graphic',
 	ChangeHandout = 'change:handout',
 }
+
+export interface IMod {
+	checkInstall: () => void;
+	registerObserver?: () => any;
+	registerEventHandlers: () => any;
+}
