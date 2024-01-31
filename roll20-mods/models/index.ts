@@ -22,7 +22,7 @@ export enum EventTypes {
 }
 
 export interface IMod {
-	checkInstall: (installMessage?: string) => unknown;
-	registerObserver?: () => any;
-	registerEventHandlers: () => any;
+	checkInstall(installMessage?: string): unknown;
+	registerObserver?(): any;
+	registerEventHandlers(): any;
 }

@@ -12,8 +12,8 @@ export interface ClassActionEvent {
 	rolltemplate: string;
 	action: string;
 	char: Character;
-	charToken: Graphic;
 	perfomedAction: boolean;
+	charToken?: Graphic;
 }
 
 export abstract class BaseClass implements IMod {
@@ -55,8 +55,7 @@ export abstract class BaseClass implements IMod {
 	 *
 	 * @memberof BaseClass
 	 */
-	abstract registerEventHandlers: () => void;
-	abstract createEventHandlers: () => void;
+	abstract registerEventHandlers(): void;
 
 	async handleChatMessage(
 		msg: ChatEventDataExtended
@@ -74,9 +73,6 @@ export abstract class BaseClass implements IMod {
 		}
 
 		const action = this.actionSvc.findAction(content);
-		const charToken = this.tokenSvc.getTokenByCharId(
-			rolledByCharacterId
-		) as Graphic;
 
 		if (!this.classActions || !this.classActions.includes(action)) {
 			return Promise.resolve(null);
@@ -88,15 +84,10 @@ export abstract class BaseClass implements IMod {
 		return Promise.resolve({
 			perfomedAction: perfomed,
 			char,
-			charToken,
 			action,
 			rolledByCharacterId,
 			rolltemplate,
 		});
-		// //toggle dmg modif if needed
-		// if (dmgModActions.includes(action)) {
-		// 	toggleDmgModifier(rolledByCharacterId, action, perfomed);
-		// }
 
 		// //set marker if its needed
 		// if (setMarkerActions.includes(action)) {
