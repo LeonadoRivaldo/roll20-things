@@ -2,7 +2,7 @@ export interface ChatEventDataExtended extends ChatEventData {
 	rolledByCharacterId: string | any;
 }
 
-export interface Markers {
+export interface GenericClass {
 	[key: string]: string;
 }
 
@@ -22,7 +22,7 @@ export enum EventTypes {
 }
 
 export interface IMod {
-	checkInstall: () => void;
+	checkInstall: (installMessage?: string) => unknown;
 	registerObserver?: () => any;
 	registerEventHandlers: () => any;
 }

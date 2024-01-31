@@ -1,8 +1,9 @@
 {
 	"compilerOptions": {
-		"target": "es2016",
+		"target": "ES2016",
 		"module": "commonjs",
 		"strict": true,
+		"resolveJsonModule": true,
 		"moduleResolution": "node",
 		"types": ["types-roll20"],
 	},

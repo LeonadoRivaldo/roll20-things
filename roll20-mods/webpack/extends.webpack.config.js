@@ -1,5 +1,6 @@
 const path = require('path');
 const GenerateJsonPlugin = require('generate-json-webpack-plugin');
+const { library } = require('webpack');
 const { getVersions } = require('../utils/versionManager')();
 
 module.exports = function (packgeInfo, scriptJsonObj, plugins = []) {
@@ -23,6 +24,10 @@ module.exports = function (packgeInfo, scriptJsonObj, plugins = []) {
 		output: {
 			filename: `${modName}.js`,
 			path: path.resolve(__dirname, `../dist/${modName}/${version}`),
+			library: {
+				type: 'var',
+				name: modName,
+			},
 		},
 		plugins: [
 			...plugins,
