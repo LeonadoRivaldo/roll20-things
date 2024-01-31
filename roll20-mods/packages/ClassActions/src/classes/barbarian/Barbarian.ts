@@ -6,7 +6,6 @@ export class Barbarian extends BaseClass {
 
 	constructor() {
 		super('Barbarian');
-		this.checkInstall();
 	}
 
 	public registerEventHandlers() {

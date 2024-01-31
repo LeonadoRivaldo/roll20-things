@@ -1,16 +1,26 @@
+import { ChatEventDataExtended } from '../../../../../models';
 import { BaseClass } from '../BaseClass';
 
 export class Paladin extends BaseClass {
 	public classActions = ['divine sense'];
 
-	registerEventHandlers = () => {
-		on('chat:message', () => {
-			log('do something');
-		});
-	};
-
 	constructor() {
 		super('Paladin');
-		this.checkInstall();
+	}
+
+	public registerEventHandlers() {
+		on('chat:message', (msg) => {
+			this.mainActionHandler(msg);
+		});
+	}
+
+	private async mainActionHandler(msg: ChatEventData) {
+		if (!msg) {
+			return;
+		}
+
+		const classActionEv = await this.handleChatMessage(
+			msg as ChatEventDataExtended
+		);
 	}
 }

@@ -14,8 +14,16 @@ export class AlertService {
 		return AlertService.instance;
 	}
 
-	systemFeedBack(msg: string): void {
+	sysFeedBack(msg: string): void {
 		sendChat('System', `&{template:desc} {{desc=${msg}}}`);
+	}
+
+	sysErrFeedBack(msg: string) {
+		this.sysFeedBack(`<b style="color:red">${msg}</b>`);
+	}
+
+	sysMessage(msg: string): void {
+		sendChat('System', msg, undefined, { noarchive: true });
 	}
 
 	consoleLog(msg: any): void {
@@ -23,9 +31,5 @@ export class AlertService {
 			return;
 		}
 		log(msg);
-	}
-
-	systemAlert(msg: string): void {
-		sendChat('System', msg, undefined, { noarchive: true });
 	}
 }

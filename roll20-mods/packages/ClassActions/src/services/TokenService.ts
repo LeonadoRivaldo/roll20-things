@@ -24,7 +24,7 @@ export class TokenService {
 		const token = this.getTokenByCharId(charId);
 
 		if (!token) {
-			this.alert.systemAlert(noTokenErroMsg);
+			this.alert.sysMessage(noTokenErroMsg);
 			return Promise.resolve(false);
 		}
 

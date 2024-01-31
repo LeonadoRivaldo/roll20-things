@@ -35,6 +35,9 @@ export abstract class BaseClass implements IMod {
 		this.tokenSvc = new TokenService();
 		this.charSvc = new CharacterService();
 		this.classResSvc = new ClassResourceService();
+
+		//check install
+		this.checkInstall();
 	}
 
 	checkInstall() {

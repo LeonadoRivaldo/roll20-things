@@ -19,7 +19,7 @@ export class ClassResourceService {
 		let current = resource.get('current') as number;
 
 		if (current <= 0) {
-			this.alert.systemFeedBack(noMoreAvailableClassFeatures);
+			this.alert.sysErrFeedBack(noMoreAvailableClassFeatures);
 			return false;
 		}
 
@@ -29,7 +29,7 @@ export class ClassResourceService {
 		const max = resource.get('max');
 		const name = resource_name.get('current');
 		let msg = `You have ${current} of ${max} on ${name}`;
-		this.alert.systemFeedBack(msg);
+		this.alert.sysFeedBack(msg);
 
 		return true;
 	}
