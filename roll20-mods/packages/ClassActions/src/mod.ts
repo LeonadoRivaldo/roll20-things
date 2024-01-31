@@ -2,6 +2,7 @@ import { ChatEventDataExtended, IMod, GenericClass } from '../../../models';
 import * as packageInfo from '../package.json';
 import { BaseClass } from './classes/BaseClass';
 import { Barbarian } from './classes/barbarian/Barbarian';
+import { Fighter } from './classes/fighter/Fighter';
 import { Paladin } from './classes/paladin/Paladin';
 import { InstallationMessageService } from './services/InstallationMessageService';
 
@@ -216,7 +217,11 @@ import { InstallationMessageService } from './services/InstallationMessageServic
 
 class ClassActionMod implements IMod {
 	private readonly imSvc: InstallationMessageService;
-	private classActionsList: BaseClass[] = [new Barbarian(), new Paladin()];
+	private classActionsList: BaseClass[] = [
+		new Barbarian(),
+		new Paladin(),
+		new Fighter(),
+	];
 
 	constructor() {
 		this.imSvc = InstallationMessageService.getInstance();
