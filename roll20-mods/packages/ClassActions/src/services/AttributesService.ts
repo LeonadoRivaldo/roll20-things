@@ -18,4 +18,11 @@ export class AttributesService {
 			name: attrName,
 		})[0] as Attribute;
 	}
+
+	public getAttributesByCharId(charId: string): Attribute[] {
+		return findObjs({
+			characterid: charId,
+			type: 'attribute',
+		}) as Attribute[];
+	}
 }

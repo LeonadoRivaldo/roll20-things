@@ -1,18 +1,21 @@
+import { AttributesService } from './AttributesService';
+
 export class DamageModifierService {
 	private readonly baseName = 'repeating_damagemod';
 	private readonly flagSuffix = 'global_damage_active_flag';
+	private readonly attrSvc: AttributesService;
+
+	constructor() {
+		//init
+		this.attrSvc = new AttributesService();
+	}
 
 	toggleDmgModifier(charId: string, action: string, value: boolean): void {
-		const filter = this.findDmgModifType(action);
-
-		const damageModObjs = findObjs({
-			characterid: charId,
-			type: 'attribute',
-		}).filter((obj) =>
-			(obj as Attribute).get('name').includes(this.baseName)
-		) as Attribute[];
-
-		const dmgModTypeObject = damageModObjs.find(filter);
+		const damageModObjs = this.findRepeatingDmgMods(charId);
+		log({ damageModObjs });
+		const dmgModTypeObject = damageModObjs.find(
+			this.findDmgModifType(action)
+		);
 
 		if (dmgModTypeObject) {
 			const nameId = dmgModTypeObject.get('name').split('_')[2];
@@ -36,5 +39,10 @@ export class DamageModifierService {
 			}
 			return `${obj.get('current')}`.toLowerCase() === type;
 		};
+	}
+
+	private findRepeatingDmgMods(charId: string) {
+		const mods = this.attrSvc.getAttributesByCharId(charId);
+		return mods.filter((mod) => mod.get('name').includes(this.baseName));
 	}
 }

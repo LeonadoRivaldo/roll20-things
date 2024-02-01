@@ -6,6 +6,7 @@ import { TokenService } from '../services/TokenService';
 import { ERROR_MESSAGES } from '../constants/ErrorMessages.enum';
 import { CharacterService } from '../services/CharacterService';
 import { ClassResourceService } from '../services/ClassResourceService';
+import { TranslationService } from '../services/TranslationService';
 
 export interface ClassActionEvent {
 	rolledByCharacterId: string;
@@ -26,6 +27,7 @@ export abstract class BaseClass implements IMod {
 	protected readonly charSvc: CharacterService;
 	protected readonly classResSvc: ClassResourceService;
 
+	private readonly tranlateSvc: TranslationService;
 	constructor(className: string) {
 		this.className = className;
 
@@ -35,6 +37,7 @@ export abstract class BaseClass implements IMod {
 		this.tokenSvc = new TokenService();
 		this.charSvc = new CharacterService();
 		this.classResSvc = new ClassResourceService();
+		this.tranlateSvc = new TranslationService();
 
 		//check install
 		this.checkInstall();
@@ -77,7 +80,7 @@ export abstract class BaseClass implements IMod {
 
 		const action = this.actionSvc.findAction(content);
 
-		if (!this.classActions || !this.classActions.includes(action)) {
+		if (this.isAClassAction(action) === false) {
 			return Promise.resolve(null);
 		}
 
@@ -100,5 +103,22 @@ export abstract class BaseClass implements IMod {
 		// 	}
 		// 	setMarker(charToken, action, perfomed);
 		// }
+	}
+
+	private isAClassAction(action: string) {
+		//if no classactions setted up
+		if (!this.classActions || this.classActions.length == 0) {
+			return false;
+		}
+
+		const tranlatedAction = this.tranlateSvc.translate(action);
+		if (
+			!this.classActions.includes(action) &&
+			!this.classActions.includes(tranlatedAction)
+		) {
+			return false;
+		}
+
+		return true;
 	}
 }
