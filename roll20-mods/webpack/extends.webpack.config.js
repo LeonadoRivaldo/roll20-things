@@ -24,10 +24,10 @@ module.exports = function (packgeInfo, scriptJsonObj, plugins = []) {
 		output: {
 			filename: `${modName}.js`,
 			path: path.resolve(__dirname, `../dist/${modName}/${version}`),
-			library: {
-				type: 'var',
-				name: modName,
-			},
+			// library: {
+			// 	type: 'var',
+			// 	name: modName,
+			// },
 		},
 		plugins: [
 			...plugins,

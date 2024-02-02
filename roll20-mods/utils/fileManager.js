@@ -14,9 +14,17 @@ function modifyFile(fileName) {
 		const endIndex = data.indexOf(endTag, startIndex);
 
 		if (startIndex !== -1 && endIndex !== -1) {
-			const modifiedContent = data
+			let modifiedContent = data
 				.substring(startIndex + startTag.length, endIndex)
 				.trim();
+
+			const stringToRemove = 'const MOD = null;';
+			modifiedContent = modifiedContent.replace(
+				stringToRemove,
+				`/**
+				* all models and must be in this section
+				*  ANCHOR MODELS/CONSTS */`
+			);
 
 			fs.writeFile(fileName, modifiedContent, 'utf8', (err) => {
 				if (err) {
