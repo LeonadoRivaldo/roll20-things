@@ -22,5 +22,11 @@ export class Fighter extends BaseClass {
 		const classActionEv = await this.handleChatMessage(
 			msg as ChatEventDataExtended
 		);
+
+		log({ c: classActionEv?.char });
+	}
+
+	private secondWindRoll() {
+		`&{template:atk} {{charname=Thorin Ungart}} {{desc=[[1d10]] HP of Lay on Hands}}`;
 	}
 }
