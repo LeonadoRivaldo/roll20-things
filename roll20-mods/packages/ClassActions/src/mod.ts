@@ -34,7 +34,9 @@ class Observable<T> {
 /**
  * all models and must be in this section
  * SECTION - MODELS/CONSTS */
+
 type Subscriber<T> = (data: T) => void;
+
 interface IEvent<T> {
 	name: string;
 	data?: T;
