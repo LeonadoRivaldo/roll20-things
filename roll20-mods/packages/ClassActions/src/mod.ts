@@ -809,6 +809,7 @@ class ArcaneArcherFighter extends BaseClass {
 	}
 }
 /** !SECTION */
+
 /**
  * SECTION Paladin
  * Class designed to describe basic functions for Paladin and its subclasses
