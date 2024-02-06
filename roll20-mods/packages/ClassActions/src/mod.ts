@@ -5,25 +5,110 @@ import { GenericClass, IMod, ChatEventDataExtended } from '../../../models';
 const MOD = null;
 
 /**
+ * utility classes
+ * SECTION - UTILS */
+
+class Observable<T> {
+	private observers: Subscriber<T>[] = [];
+
+	constructor() {}
+
+	subscribe(subscriber: Subscriber<T>): number {
+		this.observers.push(subscriber);
+		return this.observers.length - 1;
+	}
+
+	unsubscribe(index: number): void {
+		if (index !== -1) {
+			this.observers.splice(index, 1);
+		}
+	}
+
+	next(data: T): void {
+		this.observers.forEach((subscription) => subscription(data));
+	}
+}
+
+/** !SECTION UTILS END */
+
+/**
  * all models and must be in this section
- *  ANCHOR MODELS/CONSTS */
-interface ClassActionEvent {
+ * SECTION - MODELS/CONSTS */
+type Subscriber<T> = (data: T) => void;
+interface IEvent<T> {
+	name: string;
+	data?: T;
+}
+
+interface IClassActionEventProps {
 	rolledByCharacterId: string;
 	rolltemplate: string;
 	action: string;
 	char: Character;
 	perfomedAction: boolean;
 	charToken?: Graphic;
+	isSubClassAction?: boolean;
 }
 
+interface IClassActionEvent extends IEvent<IClassActionEventProps> {}
 interface I18n {
 	pt_br: GenericClass;
 }
 
+class ClassResource {
+	constructor(
+		public resource: Attribute,
+		public resourceName: Attribute
+	) {}
+
+	public get name() {
+		return this.resourceName?.get('current').toString();
+	}
+
+	public isResource(name: string) {
+		return this.name?.toLowerCase() === name;
+	}
+}
+
+class Translation {
+	constructor(public values: GenericClass) {}
+
+	translation(value: string): string {
+		const key = this.findKey(value);
+
+		if (!key) {
+			return '';
+		}
+
+		return this.values[key];
+	}
+
+	knownValue(value: string): boolean {
+		return !!this.findKey(value);
+	}
+
+	private findKey(value: string): string {
+		if (!this.values) {
+			return '';
+		}
+
+		const keys = Object.keys(this.values);
+		const key = keys.find((k) => k.toLowerCase() === value);
+
+		if (!key) {
+			return '';
+		}
+
+		return key;
+	}
+}
+
 const ERROR_MESSAGES: GenericClass = {
+	oops: `oops Something went wrong!`,
 	noTokenErroMsg: 'Your token is not on the table',
 	noMoreAvailableClassFeatures:
 		'You have no more available <br /> class features today',
+	noClassResourceAvailable: 'You have no available <br /> resources for: ',
 };
 
 const TOKEN_MARKERS: GenericClass = {
@@ -35,22 +120,34 @@ const i18n: I18n = {
 		fúria: 'rage',
 		'sentido divino': 'divine sense',
 		'retomar o fôlego': 'second wind',
-		'Surto de Ação': 'action surge',
+		'surto de ação': 'action surge',
+		'flecha de banimento': 'banishing arrow',
+		'flecha encantadora': 'beguiling arrow',
+		'flecha explosiva': 'bursting arrow',
+		'flecha enfraquecedora': 'enfeebling arrow',
+		'flecha agarradora': 'grasping arrow',
+		'flecha perfurante': 'piercing arrow',
+		'flecha buscadora': 'seeking arrow',
+		'flecha das sombras': 'shadow arrow',
 	},
 };
 
-/** MODELS/CONSTS END */
+/** !SECTION MODELS/CONSTS END */
 
-/** ANCHOR loose vars */
-const { noTokenErroMsg, noMoreAvailableClassFeatures } = ERROR_MESSAGES;
+/** SECTION - loose vars */
+const {
+	noTokenErroMsg,
+	noMoreAvailableClassFeatures,
+	noClassResourceAvailable,
+} = ERROR_MESSAGES;
 const packageInfo = {
-	version: '2.0.1',
+	version: '2.1.0',
 };
-/** loose vars ends */
+/** !SECTION loose vars ends */
 
 /**
  * all services must be in this section
- *  ANCHOR SERVICES */
+ *  SECTION - SERVICES */
 class ActionService {
 	findAction(content: string): string {
 		const findActionRegex = /{{name=(.*?)}}/;
@@ -63,6 +160,20 @@ class ActionService {
 		let action = result[1];
 
 		return action.toLowerCase();
+	}
+}
+
+class ActionEventService {
+	private static observable: Observable<IClassActionEvent> = new Observable();
+
+	constructor() {}
+
+	public listen(sub: Subscriber<IClassActionEvent>) {
+		return ActionEventService.observable.subscribe(sub);
+	}
+
+	public comunicate(event: IClassActionEvent) {
+		ActionEventService.observable.next(event);
 	}
 }
 
@@ -115,6 +226,97 @@ class AttributesService {
 		return this.getAttributeByCharId(charId, 'class_resource_name');
 	}
 
+	public getOtherResourceByCharId(charId: string) {
+		return this.getAttributeByCharId(charId, 'other_resource');
+	}
+
+	public getOtherResourceNameByCharId(charId: string) {
+		return this.getAttributeByCharId(charId, 'other_resource_name');
+	}
+
+	public getOtherRepeatingResourcesByCharId(charId: string) {
+		const suffix = 'repeating_resource';
+
+		const attrs = this.getAttrsByCharId(charId) as Attribute[];
+		return attrs.filter((attr) => attr.get('name').includes(suffix));
+	}
+
+	public getOtherRepeatingResourcesByCharIdAndResName(
+		charId: string,
+		resName: string
+	): ClassResource | null {
+		const regex = /^repeating_resource_(.*?)_resource_(left|right)(.*?)$/;
+		const repeatingResources =
+			this.getOtherRepeatingResourcesByCharId(charId);
+		const resourceName = repeatingResources.find(
+			(res) => res.get('current').toString().toLowerCase() === resName
+		);
+
+		//check if resource exists if not return null
+		if (!resourceName) {
+			return null;
+		}
+
+		const match = resourceName.get('name').match(regex);
+
+		if (match) {
+			const name = `repeating_resource_${match[1]}_resource_${match[2]}`;
+			const resource = repeatingResources.find(
+				(res) => res.get('name') === name
+			);
+
+			if (!resource) {
+				return null;
+			}
+
+			const repeatingResource = new ClassResource(resource, resourceName);
+
+			return repeatingResource;
+		}
+
+		return null;
+	}
+
+	public getCharResourceByCharIdAndResourceName(
+		charId: string,
+		resourceName: string
+	): ClassResource | null {
+		const mainResource = new ClassResource(
+			this.getClassResourceByCharId(charId),
+			this.getClassResourceNameByCharId(charId)
+		);
+
+		//check if its main resource return it if true
+		if (mainResource.isResource(resourceName)) {
+			return mainResource;
+		}
+
+		const otherResource = new ClassResource(
+			this.getOtherResourceByCharId(charId),
+			this.getOtherResourceNameByCharId(charId)
+		);
+
+		//check if its other main resource return it if true
+		if (otherResource.isResource(resourceName)) {
+			return otherResource;
+		}
+
+		const repeatingResource =
+			this.getOtherRepeatingResourcesByCharIdAndResName(
+				charId,
+				resourceName
+			);
+
+		//last check, has a repeating resource || has and it is not it
+		const isRes = repeatingResource?.isResource(resourceName);
+		if (!repeatingResource || (repeatingResource && !isRes)) {
+			return null;
+		}
+
+		//found the repeating one
+		return repeatingResource;
+	}
+
 	public getAttributeByCharId(charId: string, attrName: string) {
 		return findObjs({
 			characterid: charId,
@@ -144,9 +346,21 @@ class ClassResourceService {
 		this.attrSvc = new AttributesService();
 	}
 
-	decreaseClassResource(charId: string): boolean {
-		const resource = this.attrSvc.getClassResourceByCharId(charId);
-		const resource_name = this.attrSvc.getClassResourceNameByCharId(charId);
+	decreaseClassResource(charId: string, action: string): boolean {
+		const classResource =
+			this.attrSvc.getCharResourceByCharIdAndResourceName(charId, action);
+
+		if (!classResource) {
+			this.alert.sysErrFeedBack(`${noClassResourceAvailable} ${action}`);
+			return false;
+		}
+
+		const { resource, resourceName } = classResource;
+
+		if (!resource || !resourceName) {
+			this.alert.sysErrFeedBack(ERROR_MESSAGES.oops);
+			return false;
+		}
 
 		let current = resource.get('current') as number;
 
@@ -159,7 +373,7 @@ class ClassResourceService {
 
 		current = resource.get('current') as number;
 		const max = resource.get('max');
-		const name = resource_name.get('current');
+		const name = resourceName.get('current');
 		let msg = `You have ${current} of ${max} on ${name}`;
 		this.alert.sysFeedBack(msg);
 
@@ -179,7 +393,6 @@ class DamageModifierService {
 
 	toggleDmgModifier(charId: string, action: string, value: boolean): void {
 		const damageModObjs = this.findRepeatingDmgMods(charId);
-		log({ damageModObjs });
 		const dmgModTypeObject = damageModObjs.find(
 			this.findDmgModifType(action)
 		);
@@ -204,7 +417,7 @@ class DamageModifierService {
 			if (!obj) {
 				return false;
 			}
-			return `${obj.get('current')}`.toLowerCase() === type;
+			return obj.get('current').toString().toLowerCase() === type;
 		};
 	}
 
@@ -292,19 +505,20 @@ class TokenService {
 
 class TranslationService {
 	public translate(value: string) {
-		const { pt_br } = i18n;
-		if (pt_br[value]) {
-			return pt_br[value];
+		const ptBr = new Translation(i18n.pt_br);
+
+		if (ptBr.knownValue(value)) {
+			return ptBr.translation(value);
 		}
 
 		return value;
 	}
 }
-/** SERVICES END */
+/** !SECTION SERVICES END */
 
 /**
  * all classes must be in this section
- * ANCHOR CLASSES */
+ * SECTION - CLASSES */
 
 /**
  * Class designed to describe basic functions for all classes
@@ -314,8 +528,11 @@ class TranslationService {
  * @implements {IMod}
  */
 abstract class BaseClass implements IMod {
-	public classActions?: string[];
+	private static initialized = false;
+
+	public actions?: string[];
 	public className?: string;
+	public isSubClass?: boolean;
 
 	protected readonly dmgModifSvc: DamageModifierService;
 	protected readonly actionSvc: ActionService;
@@ -324,6 +541,7 @@ abstract class BaseClass implements IMod {
 	protected readonly classResSvc: ClassResourceService;
 	protected readonly alert: AlertService;
 	protected readonly tranlateSvc: TranslationService;
+	protected readonly actionEventService: ActionEventService;
 	constructor(className: string) {
 		this.className = className;
 
@@ -335,9 +553,12 @@ abstract class BaseClass implements IMod {
 		this.classResSvc = new ClassResourceService();
 		this.tranlateSvc = new TranslationService();
 		this.alert = AlertService.getInstance();
-
+		this.actionEventService = new ActionEventService();
 		//check install
 		this.checkInstall();
+
+		//start
+		this.init();
 	}
 
 	checkInstall() {
@@ -358,11 +579,37 @@ abstract class BaseClass implements IMod {
 	 *
 	 * @memberof BaseClass
 	 */
-	abstract registerEventHandlers(): void;
+	public abstract registerEventHandlers(): void;
 
-	async handleChatMessage(
+	public addClassActions(actions: string[]) {
+		if (!this.actions) {
+			return;
+		}
+
+		this.actions = [...this.actions, ...actions];
+	}
+
+	private init() {
+		on('chat:message', async (msg: ChatEventData) => {
+			const response = await this.handleChatMessage(
+				msg as ChatEventDataExtended
+			);
+			if (response?.perfomedAction) {
+				this.actionEventService.comunicate({
+					name: 'action:perfomed',
+					data: response,
+				});
+				return;
+			}
+
+			this.actionEventService.comunicate({ name: 'no:action' });
+		});
+		BaseClass.initialized = true;
+	}
+
+	private async handleChatMessage(
 		msg: ChatEventDataExtended
-	): Promise<ClassActionEvent | null> {
+	): Promise<IClassActionEventProps | null> {
 		return new Promise((resolve, reject) => {
 			const { noTokenErroMsg } = ERROR_MESSAGES;
 			const { content, rolledByCharacterId, rolltemplate } = msg;
@@ -382,30 +629,34 @@ abstract class BaseClass implements IMod {
 				return resolve(null);
 			}
 
-			const perfomed =
-				this.classResSvc.decreaseClassResource(rolledByCharacterId);
+			const perfomed = this.classResSvc.decreaseClassResource(
+				rolledByCharacterId,
+				action
+			);
 
-			return resolve({
+			let isSubClassAction = false;
+
+			const actionEvent = {
 				perfomedAction: perfomed,
 				char,
 				action,
 				rolledByCharacterId,
 				rolltemplate,
-			});
+				isSubClassAction,
+			};
+			return resolve(actionEvent);
 		});
 	}
 
 	private isAClassAction(action: string) {
+		const { actions } = this;
 		//if no classactions setted up
-		if (!this.classActions || this.classActions.length == 0) {
+		if (!actions || actions.length == 0) {
 			return false;
 		}
 
 		const tranlatedAction = this.tranlateSvc.translate(action);
-		if (
-			!this.classActions.includes(action) &&
-			!this.classActions.includes(tranlatedAction)
-		) {
+		if (!actions.includes(action) && !actions.includes(tranlatedAction)) {
 			return false;
 		}
 
@@ -414,32 +665,27 @@ abstract class BaseClass implements IMod {
 }
 
 /**
+ * SECTION Barbarian
  * Class designed to describe basic functions for Barbarian and its subclasses
  * @class Barbarian
  * @extends {BaseClass}
  */
 class Barbarian extends BaseClass {
-	public classActions = ['rage'];
+	public actions = ['rage'];
 
-	constructor() {
-		super('Barbarian');
+	constructor(className = 'Barbarian') {
+		super(className);
 	}
 
 	public registerEventHandlers() {
-		on('chat:message', (msg) => {
-			this.mainActionHandler(msg);
+		this.actionEventService.listen((event: IClassActionEvent) => {
+			if (event.data) {
+				this.actionsHandler(event.data);
+			}
 		});
 	}
 
-	private async mainActionHandler(msg: ChatEventData) {
-		if (!msg) {
-			return;
-		}
-
-		const classActionEv = await this.handleChatMessage(
-			msg as ChatEventDataExtended
-		);
-
+	private async actionsHandler(classActionEv: IClassActionEventProps) {
 		if (!classActionEv) {
 			return;
 		}
@@ -458,32 +704,33 @@ class Barbarian extends BaseClass {
 	}
 }
 
+/** !SECTION */
+
 /**
+ * SECTION Fighter
  * Class designed to describe basic functions for Fighter and its subclasses
  * @class Fighter
  * @extends {BaseClass}
  */
 class Fighter extends BaseClass {
-	public classActions = ['second wind', 'action surge'];
+	public actions = ['second wind', 'action surge'];
 
-	constructor() {
-		super('Fighter');
+	constructor(className = 'Fighter') {
+		super(className);
 	}
 
 	public registerEventHandlers() {
-		on('chat:message', (msg) => {
-			this.mainActionHandler(msg);
+		this.actionEventService.listen((event: IClassActionEvent) => {
+			if (event.data) {
+				this.actionsHandler(event.data);
+			}
 		});
 	}
 
-	private async mainActionHandler(msg: ChatEventData) {
-		if (!msg) {
+	private async actionsHandler(classActionEv: IClassActionEventProps) {
+		if (!classActionEv) {
 			return;
 		}
-
-		const classActionEv = await this.handleChatMessage(
-			msg as ChatEventDataExtended
-		);
 
 		if (!classActionEv) {
 			return;
@@ -516,54 +763,103 @@ class Fighter extends BaseClass {
 }
 
 /**
+ * Class designed to describe basic functions for Arcane Archer Fighter
+ *
+ * @class ArcaneArcherFighter
+ * @extends {BaseClass}
+ */
+class ArcaneArcherFighter extends BaseClass {
+	private resourceName = '';
+	public actions = [
+		'banishing arrow',
+		'beguiling arrow',
+		'bursting arrow',
+		'enfeebling arrow',
+		'grasping arrow',
+		'piercing arrow',
+		'seeking arrow',
+		'shadow arrow',
+	];
+
+	constructor() {
+		super('Fighter: Arcane Archer');
+		this.isSubClass = true;
+	}
+
+	/** @override */
+	public registerEventHandlers() {
+		this.actionEventService.listen((event: IClassActionEvent) => {
+			if (event.data) {
+				this.actionsHandler(event.data);
+			}
+		});
+	}
+
+	private async actionsHandler(classActionEv: IClassActionEventProps) {
+		if (!classActionEv) {
+			return;
+		}
+
+		const { rolledByCharacterId, action, perfomedAction } = classActionEv;
+		this.dmgModifSvc.toggleDmgModifier(
+			rolledByCharacterId,
+			action,
+			perfomedAction
+		);
+	}
+}
+/** !SECTION */
+/**
+ * SECTION Paladin
  * Class designed to describe basic functions for Paladin and its subclasses
  * @class Paladin
  * @extends {BaseClass}
  */
 class Paladin extends BaseClass {
-	public classActions = ['divine sense'];
+	public actions = ['divine sense'];
 
-	constructor() {
-		super('Paladin');
+	constructor(className = 'Paladin') {
+		super(className);
 	}
 
 	public registerEventHandlers() {
-		on('chat:message', (msg) => {
-			this.mainActionHandler(msg);
+		this.actionEventService.listen((event: IClassActionEvent) => {
+			if (event.data) {
+				this.actionsHandler(event.data);
+			}
 		});
 	}
 
-	private async mainActionHandler(msg: ChatEventData) {
-		if (!msg) {
+	private async actionsHandler(classActionEv: IClassActionEventProps) {
+		if (!classActionEv) {
 			return;
 		}
-
-		const classActionEv = await this.handleChatMessage(
-			msg as ChatEventDataExtended
-		);
 
 		if (!classActionEv) {
 			return;
 		}
 	}
 }
-/** CLASSES END */
+/** !SECTION */
+
+/** !SECTION CLASSES END */
 
 /**
- * ANCHOR INIT */
+ * SECTION - INIT */
 class ClassActionMod implements IMod {
 	private readonly imSvc: InstallationMessageService;
-	private classActionsList: BaseClass[] = [
+	private classList: BaseClass[] = [
 		new Barbarian(),
 		new Paladin(),
 		new Fighter(),
+		new ArcaneArcherFighter(),
 	];
 
 	constructor() {
 		this.imSvc = InstallationMessageService.getInstance();
 	}
 	registerEventHandlers() {
-		this.classActionsList.forEach((klass) => klass.registerEventHandlers());
+		this.classList.forEach((klass) => klass.registerEventHandlers());
 		this.imSvc.printMessages();
 	}
 	checkInstall() {
@@ -579,6 +875,6 @@ on('ready', () => {
 		classActionsMod.registerEventHandlers();
 	}
 });
-/** INIT END */
+/** !SECTION INIT END */
 
 /** MOD ENDS */
