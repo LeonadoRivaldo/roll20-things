@@ -37,8 +37,8 @@ class Observable<T> {
 
 type Subscriber<T> = (data: T) => void;
 
-interface IEvent<T> {
-	name: string;
+interface IEvent<T, N = string> {
+	name: N;
 	data?: T;
 }
 
@@ -53,7 +53,9 @@ interface IClassActionEventProps {
 	origAction?: string;
 }
 
-interface IClassActionEvent extends IEvent<IClassActionEventProps> {}
+type EventNames = 'atack:perfomed' | 'action:perfomed' | 'no:action';
+interface IClassActionEvent
+	extends IEvent<IClassActionEventProps, EventNames> {}
 interface I18n {
 	pt_br: GenericClass;
 }
@@ -584,8 +586,7 @@ class TranslationService {
  * @implements {IMod}
  */
 abstract class BaseClass implements IMod {
-	private static initialized = false;
-
+	public static lastEventData?: IClassActionEventProps | null;
 	public actions?: string[];
 	public className?: string;
 	public isSubClass?: boolean;
@@ -652,17 +653,27 @@ abstract class BaseClass implements IMod {
 			const response = await this.handleChatMessage(
 				msg as ChatEventDataExtended
 			);
-			if (response?.perfomedAction) {
+
+			if (response?.action === 'atack') {
 				this.actionEventService.comunicate({
-					name: 'action:perfomed',
+					name: 'atack:perfomed',
 					data: response,
 				});
 				return;
 			}
 
+			//default actions
+			if (response?.perfomedAction) {
+				this.actionEventService.comunicate({
+					name: 'action:perfomed',
+					data: response,
+				});
+				BaseClass.lastEventData = response;
+				return;
+			}
+
 			this.actionEventService.comunicate({ name: 'no:action' });
 		});
-		BaseClass.initialized = true;
 	}
 
 	private async handleChatMessage(
@@ -672,6 +683,17 @@ abstract class BaseClass implements IMod {
 			const { noTokenErroMsg } = ERROR_MESSAGES;
 			const { content, rolledByCharacterId, rolltemplate } = msg;
 			const char = this.charSvc.findPCById(rolledByCharacterId);
+
+			if (rolltemplate === 'atkdmg') {
+				const actionEvent = {
+					char,
+					rolledByCharacterId,
+					rolltemplate,
+					perfomedAction: false,
+					action: 'atack',
+				};
+				return resolve(actionEvent);
+			}
 
 			if (content === noTokenErroMsg || rolltemplate !== 'traits') {
 				return resolve(null);
@@ -703,15 +725,12 @@ abstract class BaseClass implements IMod {
 				action
 			);
 
-			let isSubClassAction = false;
-
 			const actionEvent = {
 				perfomedAction: perfomed,
 				char,
 				action,
 				rolledByCharacterId,
 				rolltemplate,
-				isSubClassAction,
 				origAction,
 			};
 			return resolve(actionEvent);
@@ -861,8 +880,29 @@ class ArcaneArcherFighter extends BaseClass {
 	/** @override */
 	public registerEventHandlers() {
 		this.actionEventService.listen((event: IClassActionEvent) => {
-			if (event.data) {
-				this.actionsHandler(event.data);
+			const { data, name } = event;
+
+			if (name === 'atack:perfomed') {
+				if (data) {
+					const { perfomedAction, rolledByCharacterId } = data;
+					if (BaseClass.lastEventData) {
+						const { rolledByCharacterId: lRollCharId } =
+							BaseClass.lastEventData;
+						if (rolledByCharacterId === lRollCharId) {
+							this.actionsHandler({
+								...BaseClass.lastEventData,
+								perfomedAction,
+							});
+						}
+					}
+				}
+				return;
+			}
+
+			log({ name });
+			if (data) {
+				//default actions
+				this.actionsHandler(data);
 			}
 		});
 	}
@@ -871,13 +911,13 @@ class ArcaneArcherFighter extends BaseClass {
 		if (!classActionEv) {
 			return;
 		}
-
+		const { resourceName } = this;
 		const { rolledByCharacterId, action, perfomedAction, origAction } =
 			classActionEv;
 
+		const tranlatedAction = this.tranlateSvc.translate(action);
 		let dmgModifName = action;
-
-		if (this.resourceName && action === this.resourceName && origAction) {
+		if (tranlatedAction === resourceName && origAction) {
 			dmgModifName = origAction;
 		}
 
