@@ -50,6 +50,7 @@ interface IClassActionEventProps {
 	perfomedAction: boolean;
 	charToken?: Graphic;
 	isSubClassAction?: boolean;
+	origAction?: string;
 }
 
 interface IClassActionEvent extends IEvent<IClassActionEventProps> {}
@@ -79,7 +80,7 @@ class Translation {
 		const key = this.findKey(value);
 
 		if (!key) {
-			return '';
+			return value;
 		}
 
 		return this.values[key];
@@ -89,13 +90,30 @@ class Translation {
 		return !!this.findKey(value);
 	}
 
+	findTranslationMapKey(value: string) {
+		if (!this.values) {
+			return '';
+		}
+
+		const keys = Object.keys(this.values);
+		const key = keys.find(
+			(k) => this.values[k].toLowerCase() === value.toLowerCase()
+		);
+
+		if (!key) {
+			return '';
+		}
+
+		return key;
+	}
+
 	private findKey(value: string): string {
 		if (!this.values) {
 			return '';
 		}
 
 		const keys = Object.keys(this.values);
-		const key = keys.find((k) => k.toLowerCase() === value);
+		const key = keys.find((k) => k.toLowerCase() === value.toLowerCase());
 
 		if (!key) {
 			return '';
@@ -131,8 +149,35 @@ const i18n: I18n = {
 		'flecha perfurante': 'piercing arrow',
 		'flecha buscadora': 'seeking arrow',
 		'flecha das sombras': 'shadow arrow',
+		'disparo arcano': 'arcane shot',
 	},
 };
+
+class ClassResourceActionsMap {
+	private map: { [key: string]: string } = {};
+
+	/**
+	 * map actions, where, mapfrom means actions that have a single resource,
+	 * mapTo resource to be used
+	 *
+	 * @param {string[]} mapFrom actions to map from
+	 * @param {string} mapTo action to map to
+	 * @memberof ClassResourceActionsMap
+	 */
+	set(mapFrom: string[], mapTo: string) {
+		mapFrom.forEach((k) => (this.map[k] = mapTo));
+	}
+	get(key: string) {
+		return this.map[key];
+	}
+	addValue(key: string, value: string) {}
+	getKeys() {
+		return Object.keys(this.map);
+	}
+	hasKey(key: string) {
+		return !!this.map[key];
+	}
+}
 
 /** !SECTION MODELS/CONSTS END */
 
@@ -341,11 +386,13 @@ class CharacterService {
 	}
 }
 class ClassResourceService {
-	private readonly alert: AlertService;
-	private readonly attrSvc: AttributesService;
+	private alert: AlertService;
+	private attrSvc: AttributesService;
+	private transSvc: TranslationService;
 	constructor() {
 		this.alert = AlertService.getInstance();
 		this.attrSvc = new AttributesService();
+		this.transSvc = new TranslationService();
 	}
 
 	decreaseClassResource(charId: string, action: string): boolean {
@@ -506,14 +553,21 @@ class TokenService {
 }
 
 class TranslationService {
+	ptBr: Translation = new Translation(i18n.pt_br);
 	public translate(value: string) {
-		const ptBr = new Translation(i18n.pt_br);
-
-		if (ptBr.knownValue(value)) {
-			return ptBr.translation(value);
+		if (this.ptBr.knownValue(value)) {
+			return this.ptBr.translation(value);
 		}
 
 		return value;
+	}
+
+	public fromEnglish(valueToTranslate: string, originalValue: string) {
+		if (this.ptBr.knownValue(originalValue)) {
+			return this.ptBr.findTranslationMapKey(valueToTranslate);
+		}
+
+		return valueToTranslate;
 	}
 }
 /** !SECTION SERVICES END */
@@ -535,6 +589,7 @@ abstract class BaseClass implements IMod {
 	public actions?: string[];
 	public className?: string;
 	public isSubClass?: boolean;
+	public resourceMap?: ClassResourceActionsMap;
 
 	protected readonly dmgModifSvc: DamageModifierService;
 	protected readonly actionSvc: ActionService;
@@ -556,6 +611,7 @@ abstract class BaseClass implements IMod {
 		this.tranlateSvc = new TranslationService();
 		this.alert = AlertService.getInstance();
 		this.actionEventService = new ActionEventService();
+
 		//check install
 		this.checkInstall();
 
@@ -625,10 +681,21 @@ abstract class BaseClass implements IMod {
 				return resolve(null);
 			}
 
-			const action = this.actionSvc.findAction(content);
+			const origAction = this.actionSvc.findAction(content);
+			let action = origAction.slice();
 
 			if (this.isAClassAction(action) === false) {
 				return resolve(null);
+			}
+
+			if (
+				this.resourceMap &&
+				this.resourceMap.hasKey(this.tranlateSvc.translate(action))
+			) {
+				action = this.tranlateSvc.fromEnglish(
+					this.resourceMap.get(this.tranlateSvc.translate(action)),
+					origAction
+				);
 			}
 
 			const perfomed = this.classResSvc.decreaseClassResource(
@@ -645,6 +712,7 @@ abstract class BaseClass implements IMod {
 				rolledByCharacterId,
 				rolltemplate,
 				isSubClassAction,
+				origAction,
 			};
 			return resolve(actionEvent);
 		});
@@ -771,7 +839,7 @@ class Fighter extends BaseClass {
  * @extends {BaseClass}
  */
 class ArcaneArcherFighter extends BaseClass {
-	private resourceName = '';
+	private resourceName = 'arcane shot';
 	public actions = [
 		'banishing arrow',
 		'beguiling arrow',
@@ -786,6 +854,8 @@ class ArcaneArcherFighter extends BaseClass {
 	constructor() {
 		super('Fighter: Arcane Archer');
 		this.isSubClass = true;
+		this.resourceMap = new ClassResourceActionsMap();
+		this.resourceMap.set(this.actions, this.resourceName);
 	}
 
 	/** @override */
@@ -802,10 +872,18 @@ class ArcaneArcherFighter extends BaseClass {
 			return;
 		}
 
-		const { rolledByCharacterId, action, perfomedAction } = classActionEv;
+		const { rolledByCharacterId, action, perfomedAction, origAction } =
+			classActionEv;
+
+		let dmgModifName = action;
+
+		if (this.resourceName && action === this.resourceName && origAction) {
+			dmgModifName = origAction;
+		}
+
 		this.dmgModifSvc.toggleDmgModifier(
 			rolledByCharacterId,
-			action,
+			dmgModifName,
 			perfomedAction
 		);
 	}

@@ -19,12 +19,7 @@ function modifyFile(fileName) {
 				.trim();
 
 			const stringToRemove = 'const MOD = null;';
-			modifiedContent = modifiedContent.replace(
-				stringToRemove,
-				`/**
-				* all models and must be in this section
-				*  ANCHOR MODELS/CONSTS */`
-			);
+			modifiedContent = modifiedContent.replace(stringToRemove, ``);
 
 			fs.writeFile(fileName, modifiedContent, 'utf8', (err) => {
 				if (err) {
